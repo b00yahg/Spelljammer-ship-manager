@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Spelljammer Ship</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .ship-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .ship-name {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .ship-type {
+            font-style: italic;
+        }
+        .ship-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .stat-box {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .stat-box h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .weapons-features {
+            margin-top: 20px;
+        }
+        .weapon-item, .feature-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .weapon-name, .feature-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .weapon-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .weapon-stat {
+            background-color: #f0f0f0;
+            padding: 5px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+        }
+        .weapon-notes {
+            margin-top: 5px;
+            font-style: italic;
+        }
+        .feature-description {
+            margin-top: 5px;
+        }
+        .crew-cargo {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        .crew, .cargo {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .editable-field {
+            display: inline-block;
+            min-width: 50px;
+            padding: 2px 5px;
+            border: 1px solid transparent;
+            border-radius: 3px;
+        }
+        .editable-field.editing {
+            background-color: #f0f0f0;
+            border-color: #ccc;
+        }
+        .save-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+        .add-section {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .add-section select, .add-section button {
+            margin: 5px;
+            padding: 5px;
+        }
+        .dice-roll-button {
+            background-image: url('https://dice-roller.github.io/documentation/dice-roller-logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            width: 20px;
+            height: 20px;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+        .crew-management, .journey-log {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .crew-member, .journey-entry {
+            margin-bottom: 10px;
+            padding: 5px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        .popup-content {
+            text-align: center;
+        }
+        .popup-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ship-header">
+            <div>
+                <h1 class="ship-name"><span id="shipName" class="editable-field" contenteditable="false"></span></h1>
+                <p class="ship-type"><span id="shipType" class="editable-field" contenteditable="false"></span></p>
+            </div>
+            <div>
+                <button onclick="location.href='index.html'">Back to Ships</button>
+                <button id="editButton" onclick="toggleEditMode()">Edit Ship</button>
+            </div>
+        </div>
+        <div class="ship-stats">
+            <div class="stat-box">
+                <h3>Hull</h3>
+                <p>AC: <span id="shipAC" class="editable-field" contenteditable="false"></span></p>
+                <p>HP: <span id="shipHP" class="editable-field" contenteditable="false"></span></p>
+                <p>Damage Threshold: <span id="shipDT" class="editable-field" contenteditable="false"></span></p>
+            </div>
+            <div class="stat-box">
+                <h3>Movement</h3>
+                <p>Speed: <span id="shipSpeed" class="editable-field" contenteditable="false"></span> ft.</p>
+            </div>
+            <div class="stat-box">
+                <h3>Size</h3>
+                <p>Keel: <span id="shipKeel" class="editable-field" contenteditable="false"></span> ft.</p>
+                <p>Beam: <span id="shipBeam" class="editable-field" contenteditable="false"></span> ft.</p>
+            </div>
+        </div>
+        <div class="weapons-features">
+            <h3>Weapons</h3>
+            <div id="weaponList"></div>
+            <div class="add-section">
+                <select id="weaponSelect">
+                    <option value="">Select a weapon to add</option>
+                </select>
+                <button onclick="addWeapon()">Add Weapon</button>
+            </div>
+            <h3>Features</h3>
+            <div id="featureList"></div>
+            <div class="add-section">
+                <select id="upgradeSelect">
+                    <option value="">Select an upgrade to add</option>
+                </select>
+                <button onclick="addUpgrade()">Add Upgrade</button>
+            </div>
+        </div>
+        <div class="crew-cargo">
+            <div class="crew">
+                <h3>Crew</h3>
+                <p>Crew Size: <span id="shipCrew" class="editable-field" contenteditable="false"></span></p>
+            </div>
+            <div class="cargo">
+                <h3>Cargo</h3>
+                <p>Cargo Capacity: <span id="shipCargo" class="editable-field" contenteditable="false"></span> tons</p>
+            </div>
+        </div>
+        <div class="crew-management">
+            <h3>Crew Management</h3>
+            <div>
+                <input type="text" id="crewName" placeholder="Crew Member Name">
+                <input type="text" id="crewRole" placeholder="Role">
+                <button onclick="addCrewMember()">Add Crew Member</button>
+            </div>
+            <div id="crewList"></div>
+        </div>
+        <div class="journey-log">
+            <h3>Journey Log</h3>
+            <div>
+                <input type="text" id="journeyDestination" placeholder="Destination">
+                <input type="text" id="journeyDuration" placeholder="Duration">
+                <textarea id="journeyNotes" placeholder="Notes"></textarea>
+                <button onclick="addJourneyEntry()">Add Journey Entry</button>
+            </div>
+            <div id="journeyLogList"></div>
+        </div>
+        <button class="save-button" onclick="saveShipChanges()">Save Changes</button>
+    </div>
+    <div id="rollPopup" class="popup">
+        <div class="popup-content">
+            <span class="popup-close" onclick="closePopup()">&times;</span>
+            <h3 id="popupTitle"></h3>
+            <p id="popupResult"></p>
+            <p id="popupBreakdown"></p>
+        </div>
+    </div>
+    <div id="overlay" class="overlay"></div>
+    <script>
+        const weaponStats = {
+            "Ballista": { 
+                range: "120/480 ft.", 
+                hit: "+6", 
+                damage: "3d10", 
+                notes: "Loading, Mounting" 
+            },
+            "Mangonel": { 
+                range: "200/800 ft.", 
+                hit: "+5", 
+                damage: "5d10", 
+                notes: "Loading, Mounting" 
+            },
+            "Giant Cannon": { 
+                range: "600/2,400 ft.", 
+                hit: "+6", 
+                damage: "8d10", 
+                notes: "Loading, Mounting" 
+            },
+            "Eyestalk Cannon": { 
+                range: "120/480 ft.", 
+                hit: "+8", 
+                damage: "10d6 force", 
+                notes: "Mounting" 
+            },
+            "Grappling Jaws": { 
+                range: "10 ft.", 
+                hit: "+6", 
+                damage: "4d10", 
+                notes: "On hit, target is grappled (escape DC 16)" 
+            },
+            "Blunt Ram": { 
+                range: "0 ft.", 
+                hit: "+8", 
+                damage: "16d10", 
+                notes: "Can only be used when ship rams a target" 
+            },
+            "Piercing Ram": { 
+                range: "0 ft.", 
+                hit: "+8", 
+                damage: "16d10", 
+                notes: "Can only be used when ship rams a target" 
+            },
+            "Claws": { 
+                range: "20 ft.", 
+                hit: "+3", 
+                damage: "2d10", 
+                notes: "On hit, target is grappled (escape DC 13)" 
+            },
+            "Tentacles": { 
+                range: "30 ft.", 
+                hit: "+8", 
+                damage: "4d10", 
+                notes: "On hit, target is grappled (escape DC 16)" 
+            }
+        };
+
+        const upgradeEffects = {
+            "Arcane Artillery": { weaponHitBonus: 2, weaponDamageBonus: 2 },
+            "Bones of Endless Toil": { crewCapacity: 10 },
+            "Churning Hull": { speed: 10 },
+            "Clockwork Oars": { crewRequired: -5 },
+            "Concussive Rounds": { weaponSpecialEffect: "Target speed -2d10 ft until next turn" },
+            "Death Vessel": { specialAbility: "Create pulse of horrific energy" },
+            "Defiant Sails": { ac: 2 },
+            "Dragon Sails": { ac: 3, damageResistance: "Choose one: Acid, Cold, Fire, or Lightning" },
+            "Ever-Full Sails": { speed: 20 },
+            "Explosive Rounds": { weaponDamageBonus: "2d6 fire" },
+            "Frost-Locked Hull": { ac: 1, damageImmunity: "Cold", damageVulnerability: "Fire" },
+            "Grasping Rounds": { weaponSpecialEffect: "On hit, target must make DC 14 Strength save or can't move" },
+            "Guardian Figurehead": { specialAbility: "Can animate as Iron Golem once per day" },
+            "Living Vessel": { hpRegeneration: 10 },
+            "Red Dragon Figurehead": { specialAbility: "60 ft cone of fire (6d6 damage, DC 12 Dex save) once per minute" },
+            "Reinforced Hull": { hp: "*2" },
+            "Screaming Sails": { specialAbility: "Unleash terrifying howl (4d6 psychic damage, DC 14 Wis save) every 2d6 hours" },
+            "Scything Oars": { specialAbility: "Deal 2d6 slashing damage to nearby creatures when moving" },
+            "Smuggler's Banner": { specialAbility: "Teleport ship up to 3 miles once per 2d6 days" },
+            "Storm Giant Figurehead": { specialAbility: "60 ft cone of thunder (4d6 damage, DC 12 Con save) once per minute" },
+            "Taskmaster's Drums": { specialAbility: "Gain one additional ship action for 1 minute, usable every 2d10 hours" },
+            "Vigilant Watch": { specialAbility: "Can see invisible creatures within 120 ft" }
+        };
+
+        const upgradeDescriptions = {
+            "Arcane Artillery": "This weapon gains a +2 bonus to its attack and damage rolls, and its attacks count as magical.",
+            "Bones of Endless Toil": "When a humanoid dies aboard the ship, it must make a DC 12 Wisdom save or rise as an obedient zombie crew member.",
+            "Churning Hull": "The water within 210 feet of the ship is difficult terrain for everything other than this ship.",
+            "Clockwork Oars": "The oars on this ship require only one crew member to use them.",
+            "Concussive Rounds": "If this weapon hits a vehicle's hull, that vehicle's speed decreases by 2d10 feet until the start of the attacker's next turn.",
+            "Death Vessel": "As an action, the ship can create a pulse of horrific energy affecting enemies within 210 feet (DC 14 Wisdom save or frightened for 1 minute).",
+            "Defiant Sails": "Ranged weapon attacks made against the ship and anyone aboard it are made with disadvantage.",
+            "Dragon Sails": "The sails gain a +3 bonus to AC and have resistance to a damage type based on the type of dragon scales used.",
+            "Ever-Full Sails": "The ship can move with a speed of 60 feet regardless of direction relative to the wind.",
+            "Explosive Rounds": "When this weapon hits, it deals an extra 2d6 fire damage.",
+            "Frost-Locked Hull": "The hull is immune to cold damage but vulnerable to fire damage. The ship can move at its normal speed over ice of any thickness.",
+            "Grasping Rounds": "When this weapon hits a ship, that vehicle must succeed on a DC 14 Strength saving throw or it can't move away from the attacker.",
+            "Guardian Figurehead": "Once per day, the figurehead can animate as an iron golem for 1 minute.",
+            "Living Vessel": "The ship gains a +2 bonus to all Constitution checks or saving throws. It regains 10 hit points every minute while it has at least 1 hit point.",
+            "Red Dragon Figurehead": "As an action, the figurehead can create a 60-foot cone of flame (DC 12 Dexterity save, 21 (6d6) fire damage).",
+            "Reinforced Hull": "The hull's hit point maximum is doubled.",
+            "Screaming Sails": "As an action, the sails can unleash a howl affecting hostile creatures within 300 feet (DC 14 Wisdom save or take 4d6 psychic damage and be frightened for 1 minute).",
+            "Scything Oars": "When the ship moves using these oars, nearby creatures must make a DC 10 Dexterity saving throw or take 2d6 slashing damage.",
+            "Smuggler's Banner": "As an action, the ship and all friendly creatures aboard it can teleport up to 3 miles to a known destination.",
+            "Storm Giant Figurehead": "As an action, the figurehead can create a 60-foot cone of thunder (DC 12 Constitution save, 14 (4d6) thunder damage and pushed 10 feet).",
+            "Taskmaster's Drums": "When activated, the ship gains one additional action for the next minute.",
+            "Vigilant Watch": "Invisible creatures are visible while on the ship or within 120 feet of it."
+        };
+
+        let currentShip;
+        let editMode = false;
+        let crewMembers = [];
+        let journeyLog = [];
+
+        function getShipById(id) {
+            const ships = JSON.parse(localStorage.getItem('ships')) || [];
+            return ships.find(ship => ship.id === id);
+        }
+
+        function parseWeaponString(weaponString) {
+            const regex = /^(.*?)\s*\(Crew:\s*(\d+)\)$/;
+            const match = weaponString.match(regex);
+            if (match) {
+                return {
+                    name: match[1].trim(),
+                    crew: parseInt(match[2])
+                };
+            }
+            return { name: weaponString, crew: 1 };
+        }
+
+        function getWeaponStats(weaponName) {
+            // First, check if there are custom stats for this weapon
+            if (currentShip.customWeaponStats && currentShip.customWeaponStats[weaponName]) {
+                return currentShip.customWeaponStats[weaponName];
+            }
+            // If no custom stats, fall back to the default stats
+            for (const [key, value] of Object.entries(weaponStats)) {
+                if (weaponName.includes(key)) {
+                    return value;
+                }
+            }
+            return { range: "N/A", hit: "N/A", damage: "N/A", notes: "N/A" };
+        }
+
+        function loadShipDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shipId = parseInt(urlParams.get('id'));
+            currentShip = getShipById(shipId);
+
+            if (currentShip) {
+                document.getElementById('shipName').textContent = currentShip.name;
+                document.getElementById('shipType').textContent = currentShip.type;
+                document.getElementById('shipAC').textContent = currentShip.ac;
+                document.getElementById('shipHP').textContent = currentShip.hp;
+                document.getElementById('shipDT').textContent = currentShip.dt;
+                document.getElementById('shipSpeed').textContent = currentShip.speed;
+                document.getElementById('shipKeel').textContent = currentShip.keel;
+                document.getElementById('shipBeam').textContent = currentShip.beam;
+                document.getElementById('shipCrew').textContent = currentShip.crew;
+                document.getElementById('shipCargo').textContent = currentShip.cargo;
+
+                updateWeaponList();
+                updateFeatureList();
+
+                const weaponSelect = document.getElementById('weaponSelect');
+                Object.keys(weaponStats).forEach(weapon => {
+                    const option = document.createElement('option');
+                    option.value = weapon;
+                    option.textContent = weapon;
+                    weaponSelect.appendChild(option);
+                });
+
+                const upgradeSelect = document.getElementById('upgradeSelect');
+                Object.keys(upgradeDescriptions).forEach(upgrade => {
+                    const option = document.createElement('option');
+                    option.value = upgrade;
+                    option.textContent = upgrade;
+                    upgradeSelect.appendChild(option);
+                });
+
+                crewMembers = currentShip.crewMembers || [];
+                updateCrewList();
+
+                journeyLog = currentShip.journeyLog || [];
+                updateJourneyLog();
+
+                toggleEditMode(); // Set initial edit mode
+            } else {
+                alert('Ship not found!');
+                window.location.href = 'index.html';
+            }
+        }
+
+        function updateWeaponList() {
+            const weaponList = document.getElementById('weaponList');
+            weaponList.innerHTML = '';
+            currentShip.weapons.forEach((weaponString, index) => {
+                const weapon = parseWeaponString(weaponString);
+                const stats = getWeaponStats(weapon.name);
+                const weaponElement = document.createElement('div');
+                weaponElement.className = 'weapon-item';
+                weaponElement.innerHTML = `
+                    <div class="weapon-name">${weapon.name}</div>
+                    <div class="weapon-stats">
+                        <div class="weapon-stat">Range: ${stats.range}</div>
+                        <div class="weapon-stat">
+                            Hit: <span class="editable-field" contenteditable="${editMode}" 
+                                 onblur="updateWeaponStat('${weapon.name}', 'hit', this.textContent)">
+                                 ${stats.hit}
+                            </span>
+                            <button class="dice-roll-button" title="Roll Attack" onclick="weaponAttackRoll('${weapon.name}')"></button>
+                        </div>
+                        <div class="weapon-stat">
+                            Damage: <span class="editable-field" contenteditable="${editMode}" 
+                                    onblur="updateWeaponStat('${weapon.name}', 'damage', this.textContent)">
+                                    ${stats.damage}
+                            </span>
+                            <button class="dice-roll-button" title="Roll Damage" onclick="weaponDamageRoll('${weapon.name}')"></button>
+                        </div>
+                        <div class="weapon-stat">Crew: ${weapon.crew}</div>
+                    </div>
+                    <div class="weapon-notes">Notes: ${stats.notes}</div>
+                    <button onclick="removeWeapon(${index})" ${editMode ? '' : 'style="display:none;"'}>Remove</button>
+                `;
+                weaponList.appendChild(weaponElement);
+            });
+        }
+
+        function updateFeatureList() {
+            const featureList = document.getElementById('featureList');
+            featureList.innerHTML = '';
+            currentShip.features.forEach((feature, index) => {
+                const featureElement = document.createElement('div');
+                featureElement.className = 'feature-item';
+                const description = upgradeDescriptions[feature] || "No description available.";
+                const hasRoll = description.includes("save") || description.includes("damage");
+                featureElement.innerHTML = `
+                    <div class="feature-name">${feature}</div>
+                    <div class="feature-description">
+                        ${description}
+                        ${hasRoll ? `<button class="dice-roll-button" title="Roll Feature" onclick="featureRoll('${feature}')"></button>` : ''}
+                    </div>
+                    <button onclick="removeFeature(${index})" ${editMode ? '' : 'style="display:none;"'}>Remove</button>
+                `;
+                featureList.appendChild(featureElement);
+            });
+        }
+
+        function updateWeaponStat(weaponName, stat, value) {
+            const weaponIndex = currentShip.weapons.findIndex(w => w.includes(weaponName));
+            if (weaponIndex !== -1) {
+                const weapon = parseWeaponString(currentShip.weapons[weaponIndex]);
+                const stats = getWeaponStats(weapon.name);
+                stats[stat] = value;
+                // Update the weapon stats in the currentShip object
+                currentShip.weapons[weaponIndex] = `${weaponName} (Crew: ${weapon.crew})`;
+                // Store the custom stats
+                currentShip.customWeaponStats = currentShip.customWeaponStats || {};
+                currentShip.customWeaponStats[weaponName] = stats;
+            }
+        }
+
+        function applyUpgradeEffect(upgrade) {
+            const effect = upgradeEffects[upgrade];
+            if (!effect) return;
+
+            for (const [stat, value] of Object.entries(effect)) {
+                if (stat === 'hp' && value === '*2') {
+                    currentShip[stat] *= 2;
+                } else if (typeof value === 'number') {
+                    currentShip[stat] = (currentShip[stat] || 0) + value;
+                } else if (typeof value === 'string') {
+                    currentShip[stat] = (currentShip[stat] || []).concat(value);
+                }
+            }
+        }
+
+        function removeUpgradeEffect(upgrade) {
+            const effect = upgradeEffects[upgrade];
+            if (!effect) return;
+
+            for (const [stat, value] of Object.entries(effect)) {
+                if (stat === 'hp' && value === '*2') {
+                    currentShip[stat] /= 2;
+                } else if (typeof value === 'number') {
+                    currentShip[stat] -= value;
+                } else if (typeof value === 'string') {
+                    currentShip[stat] = (currentShip[stat] || []).filter(item => item !== value);
+                }
+            }
+        }
+
+        function addWeapon() {
+            const weaponSelect = document.getElementById('weaponSelect');
+            const selectedWeapon = weaponSelect.value;
+            if (selectedWeapon) {
+                currentShip.weapons.push(`${selectedWeapon} (Crew: 1)`);
+                updateWeaponList();
+                weaponSelect.value = "";
+            }
+        }
+
+        function removeWeapon(index) {
+            currentShip.weapons.splice(index, 1);
+            updateWeaponList();
+        }
+
+        function addUpgrade() {
+            const upgradeSelect = document.getElementById('upgradeSelect');
+            const selectedUpgrade = upgradeSelect.value;
+            if (selectedUpgrade) {
+                currentShip.features.push(selectedUpgrade);
+                applyUpgradeEffect(selectedUpgrade);
+                updateFeatureList();
+                updateShipStats();
+                upgradeSelect.value = "";
+            }
+        }
+
+        function removeFeature(index) {
+            const removedFeature = currentShip.features[index];
+            currentShip.features.splice(index, 1);
+            removeUpgradeEffect(removedFeature);
+            updateFeatureList();
+            updateShipStats();
+        }
+
+        function updateShipStats() {
+            document.getElementById('shipAC').textContent = currentShip.ac;
+            document.getElementById('shipHP').textContent = currentShip.hp;
+            document.getElementById('shipSpeed').textContent = currentShip.speed;
+            // Update other stats as needed
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            const editableFields = document.querySelectorAll('.editable-field');
+            editableFields.forEach(field => {
+                field.contentEditable = editMode;
+                field.classList.toggle('editing', editMode);
+            });
+            document.getElementById('editButton').textContent = editMode ? 'View Ship' : 'Edit Ship';
+            
+            // Show/hide the save button and add/remove buttons
+            document.querySelector('.save-button').style.display = editMode ? 'block' : 'none';
+            document.querySelectorAll('.add-section').forEach(section => {
+                section.style.display = editMode ? 'block' : 'none';
+            });
+            document.querySelectorAll('.weapon-item button, .feature-item button').forEach(button => {
+                if (!button.classList.contains('dice-roll-button')) {
+                    button.style.display = editMode ? 'inline-block' : 'none';
+                }
+            });
+        }
+
+        function saveShipChanges() {
+            currentShip.name = document.getElementById('shipName').textContent;
+            currentShip.type = document.getElementById('shipType').textContent;
+            currentShip.ac = document.getElementById('shipAC').textContent;
+            currentShip.hp = document.getElementById('shipHP').textContent;
+            currentShip.dt = document.getElementById('shipDT').textContent;
+            currentShip.speed = document.getElementById('shipSpeed').textContent;
+            currentShip.keel = document.getElementById('shipKeel').textContent;
+            currentShip.beam = document.getElementById('shipBeam').textContent;
+            currentShip.crew = document.getElementById('shipCrew').textContent;
+            currentShip.cargo = document.getElementById('shipCargo').textContent;
+            currentShip.crewMembers = crewMembers;
+            currentShip.journeyLog = journeyLog;
+            currentShip.customWeaponStats = currentShip.customWeaponStats || {};
+
+            const ships = JSON.parse(localStorage.getItem('ships')) || [];
+            const index = ships.findIndex(ship => ship.id === currentShip.id);
+            if (index !== -1) {
+                ships[index] = currentShip;
+                localStorage.setItem('ships', JSON.stringify(ships));
+                alert('Ship changes saved successfully!');
+            } else {
+                alert('Error: Ship not found in storage.');
+            }
+        }
+
+        function rollDice(diceNotation) {
+            const regex = /(\d+)d(\d+)([+-]\d+)?/g;
+            let total = 0;
+            let rolls = [];
+            let match;
+
+            while ((match = regex.exec(diceNotation)) !== null) {
+                const numDice = parseInt(match[1]);
+                const diceType = parseInt(match[2]);
+                const modifier = match[3] ? parseInt(match[3]) : 0;
+
+                for (let i = 0; i < numDice; i++) {
+                    const roll = Math.floor(Math.random() * diceType) + 1;
+                    rolls.push(roll);
+                    total += roll;
+                }
+                total += modifier;
+            }
+
+            return { total, rolls, modifier: match && match[3] ? parseInt(match[3]) : 0 };
+        }
+
+        function displayRollResult(title, result, additionalInfo = '') {
+            const popupTitle = document.getElementById('popupTitle');
+            const popupResult = document.getElementById('popupResult');
+            const popupBreakdown = document.getElementById('popupBreakdown');
+
+            popupTitle.textContent = title;
+            popupResult.textContent = `Total: ${result.total}`;
+            
+            let breakdown = `Rolls: ${result.rolls.join(' + ')}`;
+            if (result.modifier) {
+                breakdown += ` ${result.modifier >= 0 ? '+' : '-'} ${Math.abs(result.modifier)}`;
+            }
+            breakdown += ` = ${result.total}`;
+            
+            if (additionalInfo) {
+                breakdown += `\n${additionalInfo}`;
+            }
+            
+            popupBreakdown.textContent = breakdown;
+
+            document.getElementById('rollPopup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('rollPopup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function weaponAttackRoll(weaponName) {
+            const stats = getWeaponStats(weaponName);
+            const hitBonus = parseInt(stats.hit.replace(/[^-\d]/g, '')); // Extract the number from the hit bonus
+            const { total, rolls } = rollDice('1d20');
+            const hitTotal = total + hitBonus;
+            displayRollResult(`${weaponName} Attack Roll`, { total: hitTotal, rolls: [total], modifier: hitBonus }, `1d20 (${total}) + ${hitBonus} = ${hitTotal}`);
+        }
+
+        function weaponDamageRoll(weaponName) {
+            const stats = getWeaponStats(weaponName);
+            const { total, rolls, modifier } = rollDice(stats.damage);
+            displayRollResult(`${weaponName} Damage Roll`, { total, rolls, modifier });
+        }
+
+        function featureRoll(featureName) {
+            const description = upgradeDescriptions[featureName];
+            let diceNotation = '';
+            let saveDC = '';
+            
+            if (description.includes('damage')) {
+                const damageMatch = description.match(/(\d+d\d+)/);
+                if (damageMatch) {
+                    diceNotation = damageMatch[1];
+                }
+            }
+            
+            const dcMatch = description.match(/DC (\d+)/);
+            if (dcMatch) {
+                saveDC = dcMatch[1];
+            }
+            
+            if (diceNotation) {
+                const { total, rolls, modifier } = rollDice(diceNotation);
+                let additionalInfo = '';
+                if (saveDC) {
+                    additionalInfo = `Saving Throw DC: ${saveDC}`;
+                }
+                displayRollResult(`${featureName} Roll`, { total, rolls, modifier }, additionalInfo);
+            } else {
+                alert(`No dice roll defined for ${featureName}`);
+            }
+        }
+
+        function initiativeRoll() {
+            const { total, rolls } = rollDice('1d20');
+            displayRollResult('Initiative Roll', { total, rolls });
+        }
+
+        function addCrewMember() {
+            const name = document.getElementById('crewName').value;
+            const role = document.getElementById('crewRole').value;
+            if (name && role) {
+                crewMembers.push({ name, role });
+                updateCrewList();
+                document.getElementById('crewName').value = '';
+                document.getElementById('crewRole').value = '';
+            }
+        }
+
+        function removeCrewMember(index) {
+            crewMembers.splice(index, 1);
+            updateCrewList();
+        }
+
+        function updateCrewList() {
+            const crewList = document.getElementById('crewList');
+            crewList.innerHTML = '';
+            crewMembers.forEach((member, index) => {
+                const crewElement = document.createElement('div');
+                crewElement.className = 'crew-member';
+                crewElement.innerHTML = `
+                    <span>${member.name} - ${member.role}</span>
+                    <button onclick="removeCrewMember(${index})" ${editMode ? '' : 'style="display:none;"'}>Remove</button>
+                `;
+                crewList.appendChild(crewElement);
+            });
+        }
+
+        function addJourneyEntry() {
+            const destination = document.getElementById('journeyDestination').value;
+            const duration = document.getElementById('journeyDuration').value;
+            const notes = document.getElementById('journeyNotes').value;
+            if (destination && duration) {
+                journeyLog.push({ destination, duration, notes, date: new Date().toISOString() });
+                updateJourneyLog();
+                document.getElementById('journeyDestination').value = '';
+                document.getElementById('journeyDuration').value = '';
+                document.getElementById('journeyNotes').value = '';
+            }
+        }
+
+        function removeJourneyEntry(index) {
+            journeyLog.splice(index, 1);
+            updateJourneyLog();
+        }
+
+        function updateJourneyLog() {
+            const logList = document.getElementById('journeyLogList');
+            logList.innerHTML = '';
+            journeyLog.forEach((entry, index) => {
+                const logElement = document.createElement('div');
+                logElement.className = 'journey-entry';
+                logElement.innerHTML = `
+                    <h4>${entry.destination}</h4>
+                    <p>Duration: ${entry.duration}</p>
+                    <p>Notes: ${entry.notes}</p>
+                    <p>Date: ${new Date(entry.date).toLocaleString()}</p>
+                    <button onclick="removeJourneyEntry(${index})" ${editMode ? '' : 'style="display:none;"'}>Remove</button>
+                `;
+                logList.appendChild(logElement);
+            });
+        }
+
+        window.onload = loadShipDetails;
+    </script>
+</body>
+</html>

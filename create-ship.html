@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create/Edit Spelljammer Ship</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        form {
+            display: grid;
+            gap: 15px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .ship-stats {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .weapon-list, .feature-list {
+            margin-top: 10px;
+        }
+        .weapon-item, .feature-item {
+            background-color: #f0f0f0;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .remove-btn {
+            margin-left: 5px;
+            color: red;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="formTitle">Create Spelljammer Ship</h1>
+        <form id="shipForm">
+            <div>
+                <label for="shipName">Ship Name:</label>
+                <input type="text" id="shipName" name="shipName" required>
+            </div>
+            <div>
+                <label for="shipType">Ship Type:</label>
+                <select id="shipType" name="shipType">
+                    <option value="bombard">Bombard</option>
+                    <option value="damselfly">Damselfly Ship</option>
+                    <option value="flying-fish">Flying Fish Ship</option>
+                    <option value="hammerhead">Hammerhead Ship</option>
+                    <option value="lamprey">Lamprey Ship</option>
+                    <option value="living-ship">Living Ship</option>
+                    <option value="nautiloid">Nautiloid</option>
+                    <option value="nightspider">Nightspider</option>
+                    <option value="scorpion">Scorpion Ship</option>
+                    <option value="shrike">Shrike Ship</option>
+                    <option value="space-galleon">Space Galleon</option>
+                    <option value="squid">Squid Ship</option>
+                    <option value="star-moth">Star Moth</option>
+                    <option value="turtle">Turtle Ship</option>
+                    <option value="tyrant">Tyrant Ship</option>
+                    <option value="wasp">Wasp Ship</option>
+                </select>
+            </div>
+            <div class="ship-stats" id="shipStats">
+                <!-- Ship statistics will be displayed here -->
+            </div>
+            <div>
+                <label for="weapon">Add Weapon:</label>
+                <input type="text" id="weapon" name="weapon">
+                <button type="button" onclick="addWeapon()">Add</button>
+            </div>
+            <div id="weaponList" class="weapon-list"></div>
+            <div>
+                <label for="feature">Add Feature:</label>
+                <input type="text" id="feature" name="feature">
+                <button type="button" onclick="addFeature()">Add</button>
+            </div>
+            <div id="featureList" class="feature-list"></div>
+            <button type="submit">Save Ship</button>
+        </form>
+    </div>
+    <script>
+        const shipTypes = {
+            bombard: { 
+                ac: 15, hp: 300, dt: 20, speed: 35, cargo: 150, crew: 12, keel: 140, beam: 30,
+                weapons: ["2 Ballistae (Crew: 3 each)", "Giant Cannon (Crew: 4)"],
+                features: []
+            },
+            damselfly: { 
+                ac: 19, hp: 200, dt: 15, speed: 70, cargo: 5, crew: 9, keel: 100, beam: 20,
+                weapons: ["Ballista (Crew: 3)", "Mangonel (Crew: 4)"],
+                features: []
+            },
+            "flying-fish": { 
+                ac: 15, hp: 250, dt: 15, speed: 40, cargo: 13, crew: 10, keel: 120, beam: 30,
+                weapons: ["Ballista (Crew: 3)", "Mangonel (Crew: 5)"],
+                features: []
+            },
+            hammerhead: { 
+                ac: 15, hp: 400, dt: 15, speed: 35, cargo: 30, crew: 15, keel: 250, beam: 25,
+                weapons: ["Ballista (Crew: 3)", "2 Mangonels (Crew: 5 each)"],
+                features: ["Blunt Ram"]
+            },
+            lamprey: {
+                ac: 15, hp: 250, dt: 15, speed: 35, cargo: 6, crew: 15, keel: 115, beam: 25,
+                weapons: ["4 Ballistae (Crew: 3 each)"],
+                features: ["Grappling Jaws (Crew: 1)"]
+            },
+            "living-ship": {
+                ac: 15, hp: 250, dt: 15, speed: 40, cargo: 10, crew: 5, keel: 80, beam: 20,
+                weapons: ["Ballista (Crew: 3)"],
+                features: ["Treant"]
+            },
+            nautiloid: {
+                ac: 15, hp: 400, dt: 15, speed: 40, cargo: 17, crew: 20, keel: 180, beam: 30,
+                weapons: ["4 Ballistae (Crew: 3 each)", "Mangonel (Crew: 5)"],
+                features: ["Tentacles"]
+            },
+            nightspider: {
+                ac: 19, hp: 300, dt: 15, speed: 40, cargo: 50, crew: 25, keel: 175, beam: 50,
+                weapons: ["4 Ballistae (Crew: 3 each)", "Mangonel (Crew: 5)"],
+                features: []
+            },
+            scorpion: {
+                ac: 19, hp: 250, dt: 15, speed: 30, cargo: 12, crew: 12, keel: 75, beam: 25,
+                weapons: ["Ballista (Crew: 3)", "Mangonel (Crew: 5)"],
+                features: ["2 Claws (Crew: 1 each)"]
+            },
+            shrike: {
+                ac: 15, hp: 250, dt: 15, speed: 70, cargo: 20, crew: 11, keel: 100, beam: 20,
+                weapons: ["3 Ballistae (Crew: 3 each)"],
+                features: ["Piercing Ram"]
+            },
+            "space-galleon": {
+                ac: 15, hp: 400, dt: 15, speed: 35, cargo: 20, crew: 20, keel: 130, beam: 30,
+                weapons: ["2 Ballistae (Crew: 3 each)", "Mangonel (Crew: 5)"],
+                features: []
+            },
+            squid: {
+                ac: 15, hp: 300, dt: 15, speed: 30, cargo: 20, crew: 13, keel: 250, beam: 25,
+                weapons: ["2 Ballistae (Crew: 3 each)", "Mangonel (Crew: 5)"],
+                features: ["Piercing Ram"]
+            },
+            "star-moth": {
+                ac: 13, hp: 400, dt: 15, speed: 50, cargo: 30, crew: 13, keel: 200, beam: 20,
+                weapons: ["2 Ballistae (Crew: 3 each)", "Mangonel (Crew: 5)"],
+                features: []
+            },
+            turtle: {
+                ac: 19, hp: 300, dt: 15, speed: 25, cargo: 30, crew: 16, keel: 95, beam: 70,
+                weapons: ["3 Ballistae (Crew: 3 each)", "Mangonel (Crew: 5)"],
+                features: []
+            },
+            tyrant: {
+                ac: 17, hp: 300, dt: 20, speed: 40, cargo: 20, crew: 10, keel: 100, beam: 100,
+                weapons: ["3 Eyestalk Cannons (Crew: 1 each)"],
+                features: []
+            },
+            wasp: {
+                ac: 15, hp: 250, dt: 15, speed: 50, cargo: 10, crew: 5, keel: 80, beam: 20,
+                weapons: ["Ballista (Crew: 3)"],
+                features: []
+            }
+        };
+
+        let editingShipId = null;
+        let shipWeapons = [];
+        let shipFeatures = [];
+
+        function getShips() {
+            return JSON.parse(localStorage.getItem('ships')) || [];
+        }
+
+        function saveShips(ships) {
+            localStorage.setItem('ships', JSON.stringify(ships));
+        }
+
+        function getShipById(id) {
+            const ships = getShips();
+            return ships.find(ship => ship.id === id);
+        }
+
+        function updateShipStats() {
+            const shipType = document.getElementById('shipType').value;
+            const stats = shipTypes[shipType];
+            const shipStats = document.getElementById('shipStats');
+            shipStats.innerHTML = `
+                <h3>Ship Statistics</h3>
+                <p>Armor Class: ${stats.ac}</p>
+                <p>Hit Points: ${stats.hp}</p>
+                <p>Damage Threshold: ${stats.dt}</p>
+                <p>Speed: ${stats.speed} ft.</p>
+                <p>Cargo Capacity: ${stats.cargo} tons</p>
+                <p>Crew: ${stats.crew}</p>
+                <p>Keel/Beam: ${stats.keel}/${stats.beam} ft.</p>
+            `;
+
+            // Update weapons and features
+            shipWeapons = [...stats.weapons];
+            shipFeatures = [...stats.features];
+            updateWeaponList();
+            updateFeatureList();
+        }
+
+        function updateWeaponList() {
+            const weaponList = document.getElementById('weaponList');
+            weaponList.innerHTML = shipWeapons.map((weapon, index) => 
+                `<span class="weapon-item">${weapon}<span class="remove-btn" onclick="removeWeapon(${index})">×</span></span>`
+            ).join(' ');
+        }
+
+        function updateFeatureList() {
+            const featureList = document.getElementById('featureList');
+            featureList.innerHTML = shipFeatures.map((feature, index) => 
+                `<span class="feature-item">${feature}<span class="remove-btn" onclick="removeFeature(${index})">×</span></span>`
+            ).join(' ');
+        }
+
+        function addWeapon() {
+            const weapon = document.getElementById('weapon').value.trim();
+            if (weapon) {
+                shipWeapons.push(weapon);
+                updateWeaponList();
+                document.getElementById('weapon').value = '';
+            }
+        }
+
+        function addFeature() {
+            const feature = document.getElementById('feature').value.trim();
+            if (feature) {
+                shipFeatures.push(feature);
+                updateFeatureList();
+                document.getElementById('feature').value = '';
+            }
+        }
+
+        function removeWeapon(index) {
+            shipWeapons.splice(index, 1);
+            updateWeaponList();
+        }
+
+        function removeFeature(index) {
+            shipFeatures.splice(index, 1);
+            updateFeatureList();
+        }
+
+        function loadShipForEditing() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shipId = parseInt(urlParams.get('id'));
+            if (shipId) {
+                const ship = getShipById(shipId);
+                if (ship) {
+                    document.getElementById('formTitle').textContent = 'Edit Spelljammer Ship';
+                    document.getElementById('shipName').value = ship.name;
+                    document.getElementById('shipType').value = ship.type;
+                    editingShipId = shipId;
+                    shipWeapons = ship.weapons || [];
+                    shipFeatures = ship.features || [];
+                    updateShipStats();
+                    updateWeaponList();
+                    updateFeatureList();
+                }
+            }
+        }
+
+        document.getElementById('shipForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const shipName = document.getElementById('shipName').value;
+            const shipType = document.getElementById('shipType').value;
+            const stats = shipTypes[shipType];
+            
+            const newShip = {
+                id: editingShipId || Date.now(),
+                name: shipName,
+                type: shipType,
+                ac: stats.ac,
+                hp: stats.hp,
+                dt: stats.dt,
+                speed: stats.speed,
+                cargo: stats.cargo,
+                crew: stats.crew,
+                keel: stats.keel,
+                beam: stats.beam,
+                weapons: shipWeapons,
+                features: shipFeatures
+            };
+            
+            const ships = getShips();
+            if (editingShipId) {
+                const shipIndex = ships.findIndex(s => s.id === editingShipId);
+                if (shipIndex !== -1) {
+                    ships[shipIndex] = newShip;
+                }
+            } else {
+                ships.push(newShip);
+            }
+            
+            saveShips(ships);
+            alert(`Ship "${shipName}" saved!`);
+            window.location.href = 'index.html';
+        });
+
+        // Update ship stats when ship type changes
+        document.getElementById('shipType').addEventListener('change', updateShipStats);
+
+        // Load ship data if editing and update stats
+        window.onload = function() {
+            loadShipForEditing();
+            updateShipStats();
+        };
+    </script>
+</body>

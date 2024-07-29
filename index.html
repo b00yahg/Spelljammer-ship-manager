@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelljammer Ship Management Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 0 20px;
+        }
+        .create-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .ship-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .ship-card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            width: calc(33.333% - 20px);
+        }
+        .ship-card h3 {
+            margin-top: 0;
+        }
+        .ship-stats {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .ship-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .ship-actions button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .view-btn { background-color: #007bff; color: white; }
+        .edit-btn { background-color: #ffc107; }
+        .copy-btn { background-color: #17a2b8; color: white; }
+        .delete-btn { background-color: #dc3545; color: white; }
+        #debug-info {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Ships</h1>
+        <button class="create-button" onclick="location.href='create-ship.html'">CREATE A SHIP</button>
+        <div class="ship-list" id="shipList">
+            <!-- Ship cards will be dynamically inserted here -->
+        </div>
+        <div id="debug-info">
+            <h2>Debug Information</h2>
+            <pre id="debug-output"></pre>
+        </div>
+    </div>
+    <script>
+        function getShips() {
+            const ships = JSON.parse(localStorage.getItem('ships')) || [];
+            document.getElementById('debug-output').textContent += `Retrieved ships: ${JSON.stringify(ships, null, 2)}\n`;
+            return ships;
+        }
+
+        function saveShips(ships) {
+            localStorage.setItem('ships', JSON.stringify(ships));
+            document.getElementById('debug-output').textContent += `Saved ships: ${JSON.stringify(ships, null, 2)}\n`;
+        }
+
+        function displayShips() {
+            const ships = getShips();
+            const shipList = document.getElementById('shipList');
+            shipList.innerHTML = '';
+            ships.forEach(ship => {
+                const shipCard = document.createElement('div');
+                shipCard.className = 'ship-card';
+                shipCard.innerHTML = `
+                    <h3>${ship.name}</h3>
+                    <div class="ship-stats">
+                        <p>Type: ${ship.type}</p>
+                        <p>AC: ${ship.ac} | HP: ${ship.hp} | DT: ${ship.dt}</p>
+                        <p>Speed: ${ship.speed} ft.</p>
+                        <p>Cargo: ${ship.cargo} tons | Crew: ${ship.crew}</p>
+                        <p>Keel/Beam: ${ship.keel}/${ship.beam} ft.</p>
+                    </div>
+                    <div class="ship-upgrades">
+                        <h4>Upgrades:</h4>
+                        ${(ship.upgrades || []).map(upgrade => `<span class="upgrade-item">${upgrade}</span>`).join(' ')}
+                    </div>
+                    <div class="ship-weapons">
+                        <h4>Weapons:</h4>
+                        ${(ship.weapons || []).map(weapon => `<span class="weapon-item">${weapon}</span>`).join(' ')}
+                    </div>
+                    <div class="ship-actions">
+                        <button class="view-btn" onclick="viewShip(${ship.id})">VIEW</button>
+                        <button class="edit-btn" onclick="editShip(${ship.id})">EDIT</button>
+                        <button class="copy-btn" onclick="copyShip(${ship.id})">COPY</button>
+                        <button class="delete-btn" onclick="deleteShip(${ship.id})">DELETE</button>
+                    </div>
+                `;
+                shipList.appendChild(shipCard);
+            });
+        }
+
+        function viewShip(id) {
+            window.location.href = `view-ship.html?id=${id}`;
+        }
+
+        function editShip(id) {
+            location.href = `create-ship.html?id=${id}`;
+        }
+
+        function copyShip(id) {
+            const ships = getShips();
+            const shipToCopy = ships.find(s => s.id === id);
+            if (shipToCopy) {
+                const newShip = {...shipToCopy, id: Date.now(), name: `${shipToCopy.name} (Copy)`};
+                ships.push(newShip);
+                saveShips(ships);
+                displayShips();
+            }
+        }
+
+        function deleteShip(id) {
+            if (confirm('Are you sure you want to delete this ship?')) {
+                const ships = getShips().filter(s => s.id !== id);
+                saveShips(ships);
+                displayShips();
+            }
+        }
+
+        // Display ships when the page loads
+        window.onload = function() {
+            document.getElementById('debug-output').textContent = 'Page loaded. Displaying ships...\n';
+            displayShips();
+        };
+    </script>
+</body>
+</html>
